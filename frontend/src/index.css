@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-main: #fdf6e3;
+  --bg-surface: #faf3dc;
+  --bg-raised: #f5ecd0;
+  --border-color: #d4c9a8;
+  --accent: #8b0000;
+  --accent-hover: #a00000;
+  --text-primary: #1a1a1a;
+  --text-secondary: #4a4a4a;
+  --text-muted: #8a8a7a;
+  --selected-bg: rgba(139, 0, 0, 0.08);
+  --header-bg: #1a1a1a;
+  --success: #2d6a4f;
+  --warning: #b8860b;
+  --danger: #8b0000;
+
+  --font-headline: 'Playfair Display', Georgia, serif;
+  --font-body: 'Lora', 'Times New Roman', serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+#root {
+  min-height: 100vh;
+}
