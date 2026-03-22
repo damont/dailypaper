@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,6 +12,12 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 10080  # 7 days
     upload_dir: str = "./uploads"
+    smtp_email: Optional[str] = None
+    smtp_app_password: Optional[str] = None
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    password_reset_expire_minutes: int = 60
+    frontend_base_url: str = "http://localhost:8098"
 
 
 @lru_cache

@@ -9,6 +9,7 @@ from api.schemas.orm.user import User
 from api.schemas.orm.page import Page
 from api.schemas.orm.page_content import PageContent
 from api.schemas.orm.agent_token import AgentToken
+from api.schemas.orm.password_reset import PasswordResetToken
 from api.utils.auth import hash_password, create_access_token
 
 TEST_DB_NAME = "dailypaper_test"
@@ -25,7 +26,7 @@ async def setup_test_db():
     client = AsyncIOMotorClient(MONGODB_URL)
     await init_beanie(
         database=client[TEST_DB_NAME],
-        document_models=[User, Page, PageContent, AgentToken],
+        document_models=[User, Page, PageContent, AgentToken, PasswordResetToken],
     )
     yield
     await client.drop_database(TEST_DB_NAME)

@@ -50,12 +50,19 @@ export default function MediumStoryGrid({ stories }: MediumStoryGridProps) {
   if (stories.length === 0) return null
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 mb-6">
-      {stories.length > 1 && (
-        <div className="hidden sm:block absolute left-1/2 top-0 bottom-0 w-px bg-[var(--border-color)]" />
-      )}
-      {stories.map(story => (
-        <MediumStoryCard key={story.id} story={story} />
+    <div
+      className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 mb-6"
+      style={{ columnGap: 0 }}
+    >
+      {stories.map((story, i) => (
+        <div
+          key={story.id}
+          className={`px-4 ${
+            stories.length > 1 && i % 2 === 0 ? 'sm:border-r sm:border-[var(--border-color)]' : ''
+          }`}
+        >
+          <MediumStoryCard story={story} />
+        </div>
       ))}
     </div>
   )

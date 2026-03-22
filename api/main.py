@@ -10,6 +10,7 @@ from api.schemas.orm.user import User
 from api.schemas.orm.page import Page
 from api.schemas.orm.page_content import PageContent
 from api.schemas.orm.agent_token import AgentToken
+from api.schemas.orm.password_reset import PasswordResetToken
 from api.services.storage import LocalStorageBackend, StorageBackend
 from api.routes import auth, pages, content, editions, images
 
@@ -33,7 +34,7 @@ async def lifespan(app: FastAPI):
     client = AsyncIOMotorClient(settings.mongodb_url)
     await init_beanie(
         database=client[settings.mongodb_db_name],
-        document_models=[User, Page, PageContent, AgentToken],
+        document_models=[User, Page, PageContent, AgentToken, PasswordResetToken],
     )
     logger.info("Connected to MongoDB database: %s", settings.mongodb_db_name)
     yield
