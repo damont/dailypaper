@@ -8,8 +8,8 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 COPY api/ api/
 
-EXPOSE 8020
-CMD ["uv", "run", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8020"]
+EXPOSE 8021
+CMD ["uv", "run", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8021"]
 
 # --- Frontend Build ---
 FROM node:20-slim AS frontend-build

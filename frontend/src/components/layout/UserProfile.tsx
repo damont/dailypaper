@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { api } from '../../api/client'
+import PageManager from '../editor/PageManager'
 
 interface AgentTokenInfo {
   id: string
@@ -9,13 +10,13 @@ interface AgentTokenInfo {
   expires_at: string
 }
 
-export default function SettingsPage() {
+export default function UserProfile() {
   const { user, updateUser } = useAuth()
   const [displayName, setDisplayName] = useState(user?.display_name || '')
   const [newspaperName, setNewspaperName] = useState(user?.newspaper_name || '')
-  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
-  const [nameMsg, setNameMsg] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [profileMsg, setProfileMsg] = useState('')
   const [pwMsg, setPwMsg] = useState('')
 
   // Agent tokens
@@ -33,25 +34,28 @@ export default function SettingsPage() {
 
   useEffect(loadTokens, [])
 
-  const handleNameSave = async (e: React.FormEvent) => {
+  const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    setNameMsg('')
+    setProfileMsg('')
     try {
       await updateUser({ display_name: displayName, newspaper_name: newspaperName })
-      setNameMsg('Saved!')
+      setProfileMsg('Saved!')
     } catch {
-      setNameMsg('Failed to update')
+      setProfileMsg('Failed to update')
     }
   }
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
     setPwMsg('')
-    if (!newPassword) return
+    if (newPassword !== confirmPassword) {
+      setPwMsg('Passwords do not match')
+      return
+    }
     try {
       await api.put('/api/auth/me', { password: newPassword })
-      setCurrentPassword('')
       setNewPassword('')
+      setConfirmPassword('')
       setPwMsg('Password updated!')
     } catch {
       setPwMsg('Failed to update password')
@@ -86,21 +90,18 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-lg">
-      <h2
-        className="text-2xl font-bold mb-6 text-[var(--text-primary)]"
-        style={{ fontFamily: 'var(--font-headline)' }}
-      >
-        Settings
-      </h2>
-
-      <section className="mb-8">
-        <h3 className="text-lg font-bold mb-3 text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-headline)' }}>
+    <div className="max-w-lg mx-auto space-y-6">
+      {/* Profile */}
+      <section className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-5">
+        <h2
+          className="text-lg font-bold mb-4 text-[var(--text-primary)]"
+          style={{ fontFamily: 'var(--font-headline)' }}
+        >
           Profile
-        </h3>
-        <form onSubmit={handleNameSave} className="space-y-3">
+        </h2>
+        <form onSubmit={handleProfileSave} className="space-y-3">
           <div>
-            <label className="text-sm text-[var(--text-secondary)] block mb-1">Display Name</label>
+            <label className="text-sm text-[var(--text-muted)] block mb-1">Display Name</label>
             <input
               type="text"
               value={displayName}
@@ -110,7 +111,7 @@ export default function SettingsPage() {
             />
           </div>
           <div>
-            <label className="text-sm text-[var(--text-secondary)] block mb-1">Newspaper Name</label>
+            <label className="text-sm text-[var(--text-muted)] block mb-1">Newspaper Name</label>
             <input
               type="text"
               value={newspaperName}
@@ -120,37 +121,76 @@ export default function SettingsPage() {
               required
             />
           </div>
-          <button type="submit" className="px-4 py-2 bg-[var(--accent)] text-white rounded hover:bg-[var(--accent-hover)] min-h-[44px] sm:min-h-0">
+          <div>
+            <span className="text-sm text-[var(--text-muted)]">Email</span>
+            <p className="text-sm text-[var(--text-primary)]">{user?.email}</p>
+          </div>
+          <button type="submit" className="w-full sm:w-auto px-4 py-2 bg-[var(--accent)] text-white rounded hover:bg-[var(--accent-hover)] min-h-[44px] sm:min-h-0">
             Save
           </button>
+          {profileMsg && <p className="text-sm text-[var(--success)]">{profileMsg}</p>}
         </form>
-        {nameMsg && <p className="text-sm mt-1 text-[var(--success)]">{nameMsg}</p>}
       </section>
 
-      <section className="mb-8">
-        <h3 className="text-lg font-bold mb-3 text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-headline)' }}>
+      {/* Newspaper Pages */}
+      <section className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-5">
+        <h2
+          className="text-lg font-bold mb-4 text-[var(--text-primary)]"
+          style={{ fontFamily: 'var(--font-headline)' }}
+        >
+          Pages
+        </h2>
+        <p className="text-sm text-[var(--text-muted)] mb-4">
+          Configure the sections of your newspaper. Pages with content will appear as tabs in your edition.
+        </p>
+        <PageManager />
+      </section>
+
+      {/* Change Password */}
+      <section className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-5">
+        <h2
+          className="text-lg font-bold mb-4 text-[var(--text-primary)]"
+          style={{ fontFamily: 'var(--font-headline)' }}
+        >
           Change Password
-        </h3>
+        </h2>
         <form onSubmit={handlePasswordChange} className="space-y-3">
-          <input type="password" placeholder="Current password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)}
-            className="w-full px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-main)] rounded text-[var(--text-primary)] min-h-[44px] sm:min-h-0" />
-          <input type="password" placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
-            className="w-full px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-main)] rounded text-[var(--text-primary)] min-h-[44px] sm:min-h-0" required />
+          <input
+            type="password"
+            placeholder="New password"
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+            className="w-full px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-main)] rounded text-[var(--text-primary)] min-h-[44px] sm:min-h-0"
+            minLength={6}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Confirm new password"
+            value={confirmPassword}
+            onChange={e => setConfirmPassword(e.target.value)}
+            className="w-full px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-main)] rounded text-[var(--text-primary)] min-h-[44px] sm:min-h-0"
+            minLength={6}
+            required
+          />
           <button type="submit" className="w-full sm:w-auto px-4 py-2 bg-[var(--accent)] text-white rounded hover:bg-[var(--accent-hover)] min-h-[44px] sm:min-h-0">
             Update Password
           </button>
+          {pwMsg && <p className={`text-sm ${pwMsg.includes('do not match') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>{pwMsg}</p>}
         </form>
-        {pwMsg && <p className="text-sm mt-1 text-[var(--success)]">{pwMsg}</p>}
       </section>
 
-      <section className="mb-8">
-        <h3 className="text-lg font-bold mb-3 text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-headline)' }}>
+      {/* Agent Tokens */}
+      <section className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-5">
+        <h2
+          className="text-lg font-bold mb-2 text-[var(--text-primary)]"
+          style={{ fontFamily: 'var(--font-headline)' }}
+        >
           Agent Tokens
-        </h3>
-        <p className="text-sm text-[var(--text-muted)] mb-3">
+        </h2>
+        <p className="text-sm text-[var(--text-muted)] mb-4">
           Create tokens for agents and scripts to access your newspaper's API.
-          Tokens use the same endpoints as the browser.
-          API docs available at <a href="/api/agent" target="_blank" className="text-[var(--accent)] hover:underline">/api/agent</a>.
+          <a href="/api/agent" target="_blank" className="text-[var(--accent)] hover:underline ml-1">View API docs</a>
         </p>
 
         <form onSubmit={handleCreateToken} className="flex flex-col sm:flex-row gap-2 mb-4">
@@ -191,7 +231,7 @@ export default function SettingsPage() {
         ) : (
           <div className="space-y-2">
             {tokens.map(t => (
-              <div key={t.id} className="flex items-center justify-between p-3 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded">
+              <div key={t.id} className="flex items-center justify-between p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded">
                 <div>
                   <span className="font-bold text-sm text-[var(--text-primary)]">{t.name}</span>
                   <span className="text-xs text-[var(--text-muted)] ml-2">
@@ -208,15 +248,6 @@ export default function SettingsPage() {
             ))}
           </div>
         )}
-      </section>
-
-      <section>
-        <h3 className="text-lg font-bold mb-3 text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-headline)' }}>
-          Account
-        </h3>
-        <p className="text-sm text-[var(--text-secondary)]">
-          Email: <span className="font-bold">{user?.email}</span>
-        </p>
       </section>
     </div>
   )

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 
-export default function Login({ onSwitch }: { onSwitch: () => void }) {
+export default function Login({ onSwitch, onForgot }: { onSwitch: () => void; onForgot: () => void }) {
   const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -51,7 +51,12 @@ export default function Login({ onSwitch }: { onSwitch: () => void }) {
             Sign In
           </button>
         </form>
-        <p className="text-sm text-center mt-4 text-[var(--text-muted)]">
+        <p className="text-sm text-center mt-3 text-[var(--text-muted)]">
+          <button onClick={onForgot} className="text-[var(--accent)] hover:underline">
+            Forgot password?
+          </button>
+        </p>
+        <p className="text-sm text-center mt-2 text-[var(--text-muted)]">
           Don't have an account?{' '}
           <button onClick={onSwitch} className="text-[var(--accent)] hover:underline">
             Register

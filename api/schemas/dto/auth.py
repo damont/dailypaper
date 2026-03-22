@@ -32,6 +32,19 @@ class UserUpdateRequest(BaseModel):
     password: Optional[str] = None
 
 
+class PasswordResetRequest(BaseModel):
+    email: str
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str = Field(min_length=6)
+
+
+class MessageResponse(BaseModel):
+    message: str
+
+
 class AgentTokenRequest(BaseModel):
     email: str
     password: str

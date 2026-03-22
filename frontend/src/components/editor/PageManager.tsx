@@ -5,7 +5,6 @@ import type { Page } from '../../types'
 export default function PageManager() {
   const [pages, setPages] = useState<Page[]>([])
   const [newName, setNewName] = useState('')
-  const [newSlug, setNewSlug] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [error, setError] = useState('')
@@ -19,7 +18,7 @@ export default function PageManager() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    const slug = newSlug || newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+    const slug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
     if (!slug) return
     try {
       await api.post('/api/pages/', {
@@ -28,7 +27,6 @@ export default function PageManager() {
         display_order: pages.length,
       })
       setNewName('')
-      setNewSlug('')
       loadPages()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create page')
@@ -62,14 +60,7 @@ export default function PageManager() {
 
   return (
     <div>
-      <h2
-        className="text-2xl font-bold mb-6 text-[var(--text-primary)]"
-        style={{ fontFamily: 'var(--font-headline)' }}
-      >
-        Manage Pages
-      </h2>
-
-      <form onSubmit={handleCreate} className="flex flex-col sm:flex-row gap-2 mb-6">
+      <form onSubmit={handleCreate} className="flex flex-col sm:flex-row gap-2 mb-4">
         <input
           type="text"
           placeholder="Page name (e.g., Sports)"
@@ -78,30 +69,23 @@ export default function PageManager() {
           className="flex-1 px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-main)] rounded text-[var(--text-primary)] min-h-[44px] sm:min-h-0"
           required
         />
-        <input
-          type="text"
-          placeholder="Slug (auto-generated)"
-          value={newSlug}
-          onChange={e => setNewSlug(e.target.value)}
-          className="sm:w-40 px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-main)] rounded text-[var(--text-primary)] min-h-[44px] sm:min-h-0"
-        />
         <button
           type="submit"
           className="px-4 py-2 bg-[var(--accent)] text-white rounded hover:bg-[var(--accent-hover)] min-h-[44px] sm:min-h-0"
         >
-          Add Page
+          Add
         </button>
       </form>
-      {error && <p className="text-sm text-[var(--danger)] mb-4">{error}</p>}
+      {error && <p className="text-sm text-[var(--danger)] mb-3">{error}</p>}
 
       {pages.length === 0 ? (
-        <p className="text-[var(--text-muted)] italic">No pages yet. Create one above.</p>
+        <p className="text-sm text-[var(--text-muted)] italic">No pages yet. Create one above.</p>
       ) : (
         <div className="space-y-2">
           {pages.map((page, idx) => (
             <div
               key={page.id}
-              className="flex items-center gap-3 p-3 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded"
+              className="flex items-center gap-3 p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded"
             >
               <div className="flex flex-col gap-0.5">
                 <button
@@ -149,7 +133,6 @@ export default function PageManager() {
                     <span className="font-bold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-headline)' }}>
                       {page.name}
                     </span>
-                    <span className="text-xs text-[var(--text-muted)] ml-2">/{page.slug}</span>
                   </div>
                 )}
               </div>
