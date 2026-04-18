@@ -11,6 +11,7 @@ from api.schemas.dto.auth import (
     RegisterRequest, LoginRequest, TokenResponse, UserResponse, UserUpdateRequest,
     PasswordResetRequest, PasswordResetConfirm, MessageResponse,
     AgentTokenRequest, AgentTokenResponse, AgentTokenInfo, AgentTokenListResponse,
+    GoogleLoginRequest,
 )
 from api.utils.auth import hash_password, verify_password, create_access_token, get_current_user
 from api.services.email import send_password_reset_email
@@ -44,8 +45,68 @@ async def register(data: RegisterRequest):
 @router.post("/login", response_model=TokenResponse)
 async def login(data: LoginRequest):
     user = await User.find_one(User.email == data.email)
-    if not user or not verify_password(data.password, user.hashed_password):
+    if not user or not user.hashed_password or not verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = create_access_token(str(user.id))
+    return TokenResponse(access_token=token)
+
+
+@router.post("/google", response_model=TokenResponse)
+async def google_login(data: GoogleLoginRequest):
+    settings = get_settings()
+    if not settings.google_client_id:
+        raise HTTPException(
+            status_code=500,
+            detail="Google login not configured",
+        )
+
+    try:
+        from google.oauth2 import id_token as google_id_token
+        from google.auth.transport import requests as google_requests
+    except ImportError:
+        raise HTTPException(
+            status_code=500,
+            detail="Google auth library not installed",
+        )
+
+    try:
+        idinfo = google_id_token.verify_oauth2_token(
+            data.id_token, google_requests.Request(), settings.google_client_id
+        )
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid Google token")
+
+    sub = idinfo.get("sub")
+    email = idinfo.get("email")
+    email_verified = idinfo.get("email_verified", False)
+    name = idinfo.get("name") or (email.split("@")[0] if email else None)
+
+    if not sub or not email or not email_verified:
+        raise HTTPException(
+            status_code=401,
+            detail="Google token missing required claims",
+        )
+
+    user = await User.find_one(User.google_sub == sub)
+
+    if not user:
+        # Link Google to existing email/password user if email matches.
+        user = await User.find_one(User.email == email)
+        if user:
+            user.google_sub = sub
+            user.email_verified = True
+            await user.save()
+        else:
+            user = User(
+                email=email,
+                display_name=name,
+                hashed_password=None,
+                newspaper_name=f"{name}'s Paper",
+                google_sub=sub,
+                email_verified=True,
+            )
+            await user.insert()
+
     token = create_access_token(str(user.id))
     return TokenResponse(access_token=token)
 
