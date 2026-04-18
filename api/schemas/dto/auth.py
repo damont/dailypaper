@@ -68,3 +68,7 @@ class AgentTokenInfo(BaseModel):
 
 class AgentTokenListResponse(BaseModel):
     tokens: list[AgentTokenInfo]
+
+
+class GoogleLoginRequest(BaseModel):
+    id_token: str

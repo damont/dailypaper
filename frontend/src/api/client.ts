@@ -77,6 +77,30 @@ class ApiClient {
   post<T>(path: string, body: unknown) { return this.request<T>('POST', path, body) }
   put<T>(path: string, body: unknown) { return this.request<T>('PUT', path, body) }
   delete<T>(path: string) { return this.request<T>('DELETE', path) }
+
+  async googleLogin(idToken: string): Promise<{ access_token: string; token_type: string }> {
+    const res = await fetch(`${this.baseUrl}/api/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_token: idToken }),
+    })
+
+    if (!res.ok) {
+      const detail = await res.json().catch(() => null)
+      throw new ApiError(res.status, detail?.detail || 'Google login failed')
+    }
+
+    return res.json()
+  }
+}
+
+export class ApiError extends Error {
+  status: number
+  constructor(status: number, message: string) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
 }
 
 export const api = new ApiClient()

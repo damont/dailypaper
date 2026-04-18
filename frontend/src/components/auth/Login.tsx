@@ -1,19 +1,39 @@
 import { useState } from 'react'
+import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../../context/AuthContext'
 
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
+
 export default function Login({ onSwitch, onForgot }: { onSwitch: () => void; onForgot: () => void }) {
-  const { login } = useAuth()
+  const { login, googleLogin } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setLoading(true)
     try {
       await login(email, password)
     } catch {
       setError('Invalid credentials')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGoogleSuccess = async (credential: string | undefined) => {
+    if (!credential) return
+    setLoading(true)
+    setError('')
+    try {
+      await googleLogin(credential)
+    } catch {
+      setError('Google login failed')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -26,6 +46,26 @@ export default function Login({ onSwitch, onForgot }: { onSwitch: () => void; on
         >
           The Daily Paper
         </h1>
+
+        {googleClientId && (
+          <div className="mb-4">
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={(resp) => handleGoogleSuccess(resp.credential)}
+                onError={() => setError('Google login failed')}
+              />
+            </div>
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-[var(--border-color)]"></div>
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-[var(--bg-surface)] px-2 text-[var(--text-muted)]">or</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
             type="email"
@@ -46,9 +86,10 @@ export default function Login({ onSwitch, onForgot }: { onSwitch: () => void; on
           {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
           <button
             type="submit"
-            className="px-4 py-2 bg-[var(--accent)] text-white rounded hover:bg-[var(--accent-hover)]"
+            disabled={loading}
+            className="px-4 py-2 bg-[var(--accent)] text-white rounded hover:bg-[var(--accent-hover)] disabled:opacity-50"
           >
-            Sign In
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
         <p className="text-sm text-center mt-3 text-[var(--text-muted)]">

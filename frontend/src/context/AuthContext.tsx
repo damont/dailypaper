@@ -8,6 +8,7 @@ interface AuthContextType {
   user: User | null
   login: (email: string, password: string) => Promise<void>
   register: (email: string, displayName: string, password: string, newspaperName: string) => Promise<void>
+  googleLogin: (credential: string) => Promise<void>
   logout: () => void
   updateUser: (data: Partial<Pick<User, 'newspaper_name' | 'display_name'>>) => Promise<void>
 }
@@ -43,6 +44,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await login(email, password)
   }
 
+  const googleLogin = async (credential: string) => {
+    const res = await api.googleLogin(credential)
+    api.setToken(res.access_token)
+    const userData = await api.get<User>('/api/auth/me')
+    setUser(userData)
+  }
+
   const logout = () => {
     api.clearToken()
     setUser(null)
@@ -54,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated: !!user, isLoading, user, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ isAuthenticated: !!user, isLoading, user, login, register, googleLogin, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   )

@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     password_reset_expire_minutes: int = 60
     frontend_base_url: str = "http://localhost:8098"
 
+    # Google OAuth
+    google_client_id: Optional[str] = None
+
 
 @lru_cache
 def get_settings() -> Settings:
