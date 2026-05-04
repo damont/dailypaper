@@ -14,15 +14,23 @@ async def registered_user(client):
     return client
 
 
+async def login_headers(client):
+    login_res = await client.post("/api/auth/login", json={
+        "email": "agent@example.com",
+        "password": "agentpass123",
+    })
+    token = login_res.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
 @pytest.mark.anyio
 async def test_create_agent_token(registered_user):
     client = registered_user
+    headers = await login_headers(client)
     res = await client.post("/api/auth/agent-token", json={
-        "email": "agent@example.com",
-        "password": "agentpass123",
         "name": "my-agent",
         "expires_in_days": 30,
-    })
+    }, headers=headers)
     assert res.status_code == 200
     data = res.json()
     assert "access_token" in data
@@ -31,25 +39,22 @@ async def test_create_agent_token(registered_user):
 
 
 @pytest.mark.anyio
-async def test_agent_token_bad_credentials(client):
+async def test_agent_token_requires_authenticated_session(client):
     res = await client.post("/api/auth/agent-token", json={
-        "email": "nobody@example.com",
-        "password": "wrong",
         "name": "test",
         "expires_in_days": 30,
     })
-    assert res.status_code == 401
+    assert res.status_code == 401 or res.status_code == 403
 
 
 @pytest.mark.anyio
 async def test_agent_token_works_for_api_calls(registered_user):
     client = registered_user
+    headers = await login_headers(client)
     token_res = await client.post("/api/auth/agent-token", json={
-        "email": "agent@example.com",
-        "password": "agentpass123",
         "name": "api-test",
         "expires_in_days": 7,
-    })
+    }, headers=headers)
     token = token_res.json()["access_token"]
 
     res = await client.get("/api/auth/me", headers={
@@ -62,12 +67,11 @@ async def test_agent_token_works_for_api_calls(registered_user):
 @pytest.mark.anyio
 async def test_agent_token_works_for_content(registered_user):
     client = registered_user
+    headers = await login_headers(client)
     token_res = await client.post("/api/auth/agent-token", json={
-        "email": "agent@example.com",
-        "password": "agentpass123",
         "name": "content-pusher",
         "expires_in_days": 30,
-    })
+    }, headers=headers)
     token = token_res.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -88,23 +92,14 @@ async def test_agent_token_works_for_content(registered_user):
 @pytest.mark.anyio
 async def test_list_agent_tokens(registered_user):
     client = registered_user
+    headers = await login_headers(client)
     for name in ["token-1", "token-2"]:
         await client.post("/api/auth/agent-token", json={
-            "email": "agent@example.com",
-            "password": "agentpass123",
             "name": name,
             "expires_in_days": 30,
-        })
+        }, headers=headers)
 
-    login_res = await client.post("/api/auth/login", json={
-        "email": "agent@example.com",
-        "password": "agentpass123",
-    })
-    token = login_res.json()["access_token"]
-
-    res = await client.get("/api/auth/agent-tokens", headers={
-        "Authorization": f"Bearer {token}",
-    })
+    res = await client.get("/api/auth/agent-tokens", headers=headers)
     assert res.status_code == 200
     tokens = res.json()["tokens"]
     assert len(tokens) == 2
@@ -116,19 +111,11 @@ async def test_list_agent_tokens(registered_user):
 @pytest.mark.anyio
 async def test_revoke_agent_token(registered_user):
     client = registered_user
+    headers = await login_headers(client)
     await client.post("/api/auth/agent-token", json={
-        "email": "agent@example.com",
-        "password": "agentpass123",
         "name": "to-revoke",
         "expires_in_days": 30,
-    })
-
-    login_res = await client.post("/api/auth/login", json={
-        "email": "agent@example.com",
-        "password": "agentpass123",
-    })
-    auth_token = login_res.json()["access_token"]
-    headers = {"Authorization": f"Bearer {auth_token}"}
+    }, headers=headers)
 
     list_res = await client.get("/api/auth/agent-tokens", headers=headers)
     token_id = list_res.json()["tokens"][0]["id"]
