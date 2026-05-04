@@ -13,7 +13,7 @@ from api.schemas.dto.auth import (
     AgentTokenRequest, AgentTokenResponse, AgentTokenInfo, AgentTokenListResponse,
     GoogleLoginRequest,
 )
-from api.utils.auth import hash_password, verify_password, create_access_token, get_current_user
+from api.utils.auth import hash_password, create_access_token, get_current_user
 from api.services.email import send_password_reset_email
 
 logger = logging.getLogger(__name__)
@@ -185,11 +185,7 @@ async def reset_password(data: PasswordResetConfirm):
 
 
 @router.post("/agent-token", response_model=AgentTokenResponse)
-async def create_agent_token(data: AgentTokenRequest):
-    user = await User.find_one(User.email == data.email)
-    if not user or not verify_password(data.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
+async def create_agent_token(data: AgentTokenRequest, user=Depends(get_current_user)):
     expires_delta = timedelta(days=data.expires_in_days)
     access_token = create_access_token(str(user.id), expires_delta=expires_delta)
 

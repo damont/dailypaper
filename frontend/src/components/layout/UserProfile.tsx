@@ -66,12 +66,8 @@ export default function UserProfile() {
     e.preventDefault()
     setTokenError('')
     setNewToken('')
-    const password = prompt('Enter your password to create an agent token:')
-    if (!password) return
     try {
       const res = await api.post<{ access_token: string }>('/api/auth/agent-token', {
-        email: user?.email,
-        password,
         name: tokenName || 'default',
         expires_in_days: tokenDays,
       })
@@ -189,7 +185,7 @@ export default function UserProfile() {
           Agent Tokens
         </h2>
         <p className="text-sm text-[var(--text-muted)] mb-4">
-          Create tokens for agents and scripts to access your newspaper's API.
+          Create tokens for agents and scripts to access your newspaper's API from your current signed-in session.
           <a href="/api/agent" target="_blank" className="text-[var(--accent)] hover:underline ml-1">View API docs</a>
         </p>
 

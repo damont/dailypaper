@@ -46,8 +46,6 @@ class MessageResponse(BaseModel):
 
 
 class AgentTokenRequest(BaseModel):
-    email: str
-    password: str
     name: str = "default"
     expires_in_days: int = Field(default=30, ge=1, le=365)
 
